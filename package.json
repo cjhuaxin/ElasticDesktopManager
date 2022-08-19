@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "unplugin-auto-import": "^0.11.2",
+    "unplugin-vue-components": "^0.22.4"
+  },
+  "dependencies": {
+    "element-plus": "^2.2.13",
+    "esbuild-darwin-arm64": "^0.14.54"
+  }
+}
