@@ -1,4 +1,4 @@
-package dto
+package models
 
 type NewConnectionReq struct {
 	Name     string `json:"name"`

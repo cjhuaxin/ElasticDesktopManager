@@ -1,26 +1,27 @@
-package backend
+package models
 
 import (
-	"github.com/cjhuaxin/ElasticDesktopManager/backend/connection"
+	"time"
+
+	"github.com/99designs/keyring"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
-	"time"
 )
 
 type EdmContext struct {
-	conn      *connection.Connection
 	ctxMap    map[string]interface{}
 	originCtx context.Context
-	paths     *paths
-	log       *zap.SugaredLogger
+	Paths     *Paths
+	Log       *zap.SugaredLogger
+	Keyring   keyring.Keyring
 }
 
-type paths struct {
-	homeDir string
-	confDir string
-	dbDir   string
-	logDir  string
-	tmpDir  string
+type Paths struct {
+	HomeDir string
+	ConfDir string
+	DbDir   string
+	LogDir  string
+	TmpDir  string
 }
 
 func (*EdmContext) Deadline() (deadline time.Time, ok bool) {
@@ -35,6 +36,12 @@ func (*EdmContext) Err() error {
 	return nil
 }
 
+func NewContext(ctx context.Context) *EdmContext {
+	return &EdmContext{
+		originCtx: ctx,
+	}
+}
+
 func (c *EdmContext) Value(key interface{}) interface{} {
 	if k, ok := key.(string); ok {
 		return c.ctxMap[k]
@@ -43,32 +50,10 @@ func (c *EdmContext) Value(key interface{}) interface{} {
 	return nil
 }
 
-func NewContext(ctx context.Context) *EdmContext {
-	return &EdmContext{
-		originCtx: ctx,
-	}
-}
-
 func (c *EdmContext) SetValue(key string, value interface{}) {
 	c.ctxMap[key] = value
 }
 
-func (c *EdmContext) GetConn() *connection.Connection {
-	return c.conn
-}
-
-func (c *EdmContext) SetConn(conn *connection.Connection) {
-	c.conn = conn
-}
-
 func (c *EdmContext) GetOriginCtx() context.Context {
 	return c.originCtx
-}
-
-func (c *EdmContext) GetPath() *paths {
-	return c.paths
-}
-
-func (c *EdmContext) Log() *zap.SugaredLogger {
-	return c.log
 }

@@ -1,4 +1,4 @@
-export namespace dto {
+export namespace models {
 	
 	export class NewConnectionReq {
 	    name: string;
