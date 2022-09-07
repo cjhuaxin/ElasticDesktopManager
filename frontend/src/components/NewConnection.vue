@@ -1,10 +1,10 @@
 <template>
   <!-- Form -->
-  <el-button text @click="dialogFormVisible = true">New Connection</el-button>
+  <el-button @click="dialogFormVisible = true" type="info">New Connection</el-button>
 
   <el-dialog v-model="dialogFormVisible" title="New Connection" draggable :close-on-click-modal="false">
-    <el-form ref="ruleFormRef" label-width="100px" style="max-width: 450px" v-loading="loading"
-      :label-position="'right'" :rules="connectionRules" :model="formNewConnection">
+    <el-form ref="ruleFormRef" label-width="100px" style="max-width: 450px" v-loading="loading" :label-position="'top'"
+      :rules="connectionRules" :model="formNewConnection">
       <el-form-item label="Name">
         <el-input v-model="formNewConnection.connectionName" autocomplete="off" />
       </el-form-item>
@@ -26,7 +26,7 @@
       </el-row>
       <el-row :gutter="20">
         <el-col :span="24">
-          <div id="testResult" class="test-result">{{ testConnectionData.result }}</div>
+          <div :style="testResultColor" class="test-result">{{ testConnectionData.result }}</div>
         </el-col>
       </el-row>
     </el-form>
@@ -42,13 +42,18 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { FormInstance, FormRules, ElNotification } from "element-plus";
-import { TestEsConnection } from "../../wailsjs/go/connection/Connection";
-import { CreateEsConnection } from "../../wailsjs/go/connection/Connection";
-import { models } from "../../wailsjs/go/models";
 
+import { TestEsConnection, CreateEsConnection } from "../../wailsjs/go/service/Connection";
+import { models } from "../../wailsjs/go/models";
+import bus from './mitt'
+
+const SUCCESS_CODE = "0"
 const dialogFormVisible = ref(false)
 const loading = ref(false)
 const ruleFormRef = ref<FormInstance>()
+const testResultColor = {
+  color: "rgb(32, 97, 49)",
+}
 const formNewConnection = reactive({
   connectionName: '',
   urls: '',
@@ -65,6 +70,27 @@ const connectionRules = reactive<FormRules>({
   ],
 
 })
+
+function testConn() {
+  loading.value = true
+  let req = new models.NewConnectionReq({
+    "name": formNewConnection.connectionName,
+    "urls": formNewConnection.urls,
+    "username": formNewConnection.username,
+    "password": formNewConnection.password
+  })
+
+  TestEsConnection(req).then(result => {
+    loading.value = false
+    if (result.err_code == SUCCESS_CODE) {
+      testConnectionData.result = "Succeeded"
+    } else {
+      testResultColor.color = 'red'
+      console.log(testResultColor)
+      testConnectionData.result = "Failed: " + result.err_msg
+    }
+  })
+}
 
 const submitForm = async (formEl: FormInstance | undefined) => {
   if (!formEl) {
@@ -83,37 +109,20 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       CreateEsConnection(req).then(result => {
         loading.value = false
         dialogFormVisible.value = false
-        if (result == "") {
+        bus.emit('handleAddNewConnetion')
+
+        if (result.err_code == SUCCESS_CODE) {
           ElNotification.success({
             title: 'Success',
             message: 'Create Connection Success',
             showClose: false,
           })
         } else {
-          testConnectionData.result = "Failed: " + result
+          testConnectionData.result = "Failed: " + result.err_msg
         }
       })
     } else {
       testConnectionData.result = "Please input the required fields"
-    }
-  })
-}
-
-function testConn() {
-  loading.value = true
-  let req = new models.NewConnectionReq({
-    "name": formNewConnection.connectionName,
-    "urls": formNewConnection.urls,
-    "username": formNewConnection.username,
-    "password": formNewConnection.password
-  })
-
-  TestEsConnection(req).then(result => {
-    loading.value = false
-    if (result == "") {
-      testConnectionData.result = "Succeeded"
-    } else {
-      testConnectionData.result = "Failed: " + result
     }
   })
 }

@@ -11,16 +11,12 @@ import (
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/models"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/resource"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/util"
-	"github.com/goware/urlx"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/olivere/elastic/v7"
 	"github.com/rs/xid"
 )
 
 type Connection struct {
 	*base.BaseService
-	esClientMap map[string]*elastic.Client
-	dbClient    *sql.DB
 }
 
 func NewConnection(baseService *base.BaseService) *Connection {
@@ -40,7 +36,7 @@ func (c *Connection) Init(ctx *models.EdmContext) error {
 }
 
 func (c *Connection) TestEsConnection(req *models.NewConnectionReq) *models.BaseResponse {
-	_, err := c.initEsClient(req)
+	_, err := c.InitEsClient(req.Urls, req.Username, req.Password)
 	if err != nil {
 		return c.BuildFailed(errcode.ConnectionErr, err.Error())
 	}
@@ -49,7 +45,7 @@ func (c *Connection) TestEsConnection(req *models.NewConnectionReq) *models.Base
 }
 
 func (c *Connection) CreateEsConnection(req *models.NewConnectionReq) *models.BaseResponse {
-	client, err := c.initEsClient(req)
+	client, err := c.InitEsClient(req.Urls, req.Username, req.Password)
 	if err != nil {
 		c.Log.Errorf("init es client failed: %v", err)
 		return c.BuildFailed(errcode.ConnectionErr, err.Error())
@@ -65,7 +61,7 @@ func (c *Connection) CreateEsConnection(req *models.NewConnectionReq) *models.Ba
 		c.Log.Errorf("aes encrypt failed: %v", err)
 		return c.BuildFailed(errcode.CommonErr, err.Error())
 	}
-	urls, err := normalizeUrls(req.Urls)
+	urls, err := util.NormalizeUrls(req.Urls)
 	if err != nil {
 		c.Log.Errorf("normalize urls failed: %v", err)
 		return c.BuildFailed(errcode.CommonErr, err.Error())
@@ -77,10 +73,7 @@ func (c *Connection) CreateEsConnection(req *models.NewConnectionReq) *models.Ba
 		c.Log.Errorf("save the connection info to db failed: %v", err)
 		return c.BuildFailed(errcode.DatabaseErr, err.Error())
 	}
-	if c.esClientMap == nil {
-		c.esClientMap = make(map[string]*elastic.Client)
-	}
-	c.esClientMap[id] = client
+	c.Ctx.SetEsClient(id, client)
 
 	return c.BuildSucess(nil)
 }
@@ -110,25 +103,6 @@ func (c *Connection) GetSavedConnectionList() *models.BaseResponse {
 	return c.BuildSucess(connectionList)
 }
 
-func (c *Connection) GetEsClient(connectionId string) *elastic.Client {
-	return c.esClientMap[connectionId]
-}
-
-func (c *Connection) initEsClient(req *models.NewConnectionReq) (*elastic.Client, error) {
-	options := make([]elastic.ClientOptionFunc, 0)
-	urls, err := normalizeUrls(req.Urls)
-	if err != nil {
-		return nil, err
-	}
-	options = append(options, elastic.SetURL(urls...))
-	if req.Username != "" {
-		options = append(options, elastic.SetBasicAuth(req.Username, req.Password))
-	}
-	options = append(options, elastic.SetSniff(false))
-
-	return elastic.NewClient(options...)
-}
-
 func (c *Connection) initDbClient() error {
 	db, err := sql.Open("sqlite3", filepath.Join(c.Paths.DbDir, "edm.db"))
 	if err != nil {
@@ -141,25 +115,4 @@ func (c *Connection) initDbClient() error {
 	c.dbClient = db
 
 	return nil
-}
-
-func normalizeUrls(urls string) ([]string, error) {
-	urlSlice := strings.Split(urls, ",")
-	endpoints := make([]string, 0)
-	for _, addr := range urlSlice {
-		parsed, err := urlx.Parse(addr)
-		if err != nil {
-			return nil, err
-		}
-		host, port, err := urlx.SplitHostPort(parsed)
-		if err != nil {
-			return nil, err
-		}
-		if port == "" {
-			port = resource.EsDefaultPort
-		}
-		endpoints = append(endpoints, fmt.Sprintf("%s://%s:%s", parsed.Scheme, host, port))
-	}
-
-	return endpoints, nil
 }

@@ -1,27 +1,18 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 
-	"github.com/99designs/keyring"
-	"go.uber.org/zap"
+	"github.com/olivere/elastic/v7"
 	"golang.org/x/net/context"
 )
 
 type EdmContext struct {
-	ctxMap    map[string]interface{}
-	originCtx context.Context
-	Paths     *Paths
-	Log       *zap.SugaredLogger
-	Keyring   keyring.Keyring
-}
-
-type Paths struct {
-	HomeDir string
-	ConfDir string
-	DbDir   string
-	LogDir  string
-	TmpDir  string
+	ctxMap      map[string]interface{}
+	esClientMap map[string]*elastic.Client
+	dbClient    *sql.DB
+	originCtx   context.Context
 }
 
 func (*EdmContext) Deadline() (deadline time.Time, ok bool) {
@@ -56,4 +47,19 @@ func (c *EdmContext) SetValue(key string, value interface{}) {
 
 func (c *EdmContext) GetOriginCtx() context.Context {
 	return c.originCtx
+}
+
+func (c *EdmContext) GetEsClient(id string) *elastic.Client {
+	if c.esClientMap == nil || len(c.esClientMap) == 0 {
+		return nil
+	}
+	return c.esClientMap[id]
+}
+
+func (c *EdmContext) SetEsClient(id string, client *elastic.Client) {
+	if c.esClientMap == nil {
+		c.esClientMap = make(map[string]*elastic.Client)
+	}
+
+	c.esClientMap[id] = client
 }

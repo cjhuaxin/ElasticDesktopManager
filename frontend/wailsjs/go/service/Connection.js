@@ -14,10 +14,6 @@ export function CreateEsConnection(arg1) {
   return window['go']['service']['Connection']['CreateEsConnection'](arg1);
 }
 
-export function GetEsClient(arg1) {
-  return window['go']['service']['Connection']['GetEsClient'](arg1);
-}
-
 export function GetSavedConnectionList() {
   return window['go']['service']['Connection']['GetSavedConnectionList']();
 }

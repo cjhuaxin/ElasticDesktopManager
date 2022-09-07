@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "element-plus": "^2.2.13",
-    "esbuild-darwin-arm64": "^0.14.54"
+    "esbuild-darwin-arm64": "^0.14.54",
+    "mitt": "^3.0.0"
   }
 }

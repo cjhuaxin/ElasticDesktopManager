@@ -10,9 +10,10 @@ import (
 	"reflect"
 
 	"github.com/99designs/keyring"
-	"github.com/cjhuaxin/ElasticDesktopManager/backend/connection"
+	"github.com/cjhuaxin/ElasticDesktopManager/backend/base"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/models"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/resource"
+	"github.com/cjhuaxin/ElasticDesktopManager/backend/service"
 	"github.com/thanhpk/randstr"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"go.uber.org/zap"
@@ -26,14 +27,17 @@ type Bind interface {
 
 // App struct
 type App struct {
-	ctx *models.EdmContext
+	*base.BaseService
 }
 
 func WailsInit(assets embed.FS) *options.App {
+	baseService := &base.BaseService{}
 	// Create an instance of the app structure
-	app := &App{}
+	app := &App{
+		BaseService: baseService,
+	}
 	bindList := make([]interface{}, 0)
-	extraBindList := extraBinds()
+	extraBindList := extraBinds(baseService)
 	bindList = allBinds(app, extraBindList)
 
 	return &options.App{
@@ -53,7 +57,7 @@ func WailsInit(assets embed.FS) *options.App {
 }
 
 func (a *App) onStart(ctx context.Context, binds ...Bind) error {
-	a.ctx = models.NewContext(ctx)
+	a.Ctx = models.NewContext(ctx)
 	//init directory for app
 	err := a.initDirectoryStructure()
 	if err != nil {
@@ -62,7 +66,7 @@ func (a *App) onStart(ctx context.Context, binds ...Bind) error {
 	//init log
 	a.initLog()
 	for _, bind := range binds {
-		err = bind.Init(a.ctx)
+		err = bind.Init(a.Ctx)
 		if err != nil {
 			return err
 		}
@@ -87,9 +91,9 @@ func allBinds(app *App, extraBinds []Bind) []interface{} {
 	return all
 }
 
-func extraBinds() []Bind {
+func extraBinds(baseService *base.BaseService) []Bind {
 	return []Bind{
-		connection.NewConnection(),
+		service.NewConnection(baseService),
 	}
 }
 
@@ -100,7 +104,7 @@ func (a *App) initDirectoryStructure() error {
 	}
 	homeDir := filepath.Join(u.HomeDir, ".edm")
 	fmt.Printf("user home is: %s\n", homeDir)
-	a.ctx.Paths = &models.Paths{
+	a.Paths = &base.Paths{
 		HomeDir: homeDir, // Home directory of the user
 		ConfDir: filepath.Join(homeDir, "conf"),
 		DbDir:   filepath.Join(homeDir, "db"),
@@ -118,7 +122,7 @@ func (a *App) initDirectoryStructure() error {
 }
 
 func (a *App) createFolderIfNotExists() error {
-	pathValue := reflect.ValueOf(*a.ctx.Paths)
+	pathValue := reflect.ValueOf(*a.Paths)
 	for i := 0; i < pathValue.NumField(); i++ {
 		path := pathValue.Field(i).String()
 		if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -136,7 +140,7 @@ func (a *App) createFolderIfNotExists() error {
 
 func (a *App) initLog() {
 	infoLogger := &lumberjack.Logger{
-		Filename: filepath.Join(a.ctx.Paths.LogDir, "edm.log"),
+		Filename: filepath.Join(a.Paths.LogDir, "edm.log"),
 	}
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -147,9 +151,9 @@ func (a *App) initLog() {
 		zapcore.InfoLevel,
 	)
 	logger := zap.New(infoCore, zap.AddStacktrace(zapcore.FatalLevel))
-	a.ctx.Log = logger.Sugar()
+	a.Log = logger.Sugar()
 
-	defer a.ctx.Log.Sync()
+	defer a.Log.Sync()
 }
 
 func (a *App) initKeyring() error {
@@ -159,12 +163,12 @@ func (a *App) initKeyring() error {
 	if err != nil {
 		return err
 	}
-	a.ctx.Keyring = ring
+	a.Keyring = ring
 	_, err = ring.Get(resource.EncryptAESKey)
 	if err != nil {
 		if err == keyring.ErrKeyNotFound {
 			// init aes key if not exists
-			a.ctx.Log.Infof("AES Ecrypt key not exist,generate new one")
+			a.Log.Infof("AES Ecrypt key not exist,generate new one")
 			token := randstr.String(32)
 			ring.Set(keyring.Item{
 				Key:  resource.EncryptAESKey,
@@ -174,7 +178,7 @@ func (a *App) initKeyring() error {
 		}
 		return err
 	}
-	a.ctx.Log.Infof("AES Ecrypt key already exist")
+	a.Log.Infof("AES Ecrypt key already exist")
 
 	return nil
 }

@@ -15,9 +15,16 @@ func NewIndex(baseService *base.BaseService) *Index {
 	}
 }
 
-func (c *Index) Init(ctx *models.EdmContext) error {
-	c.Ctx = ctx
-	
+func (i *Index) Init(ctx *models.EdmContext) error {
+	i.Ctx = ctx
 
 	return nil
+}
+
+func (i *Index) CatIndex(req *models.CatIndexReq) *models.BaseResponse {
+	client := i.Ctx.GetEsClient(req.ID)
+	if client ==nil{
+		
+		i.InitEsClient()
+	}
 }

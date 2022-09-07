@@ -2,7 +2,7 @@ module github.com/cjhuaxin/ElasticDesktopManager
 
 go 1.17
 
-require github.com/wailsapp/wails/v2 v2.0.0-beta.43
+require github.com/wailsapp/wails/v2 v2.0.0-beta.44.2
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.15
