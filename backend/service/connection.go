@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/99designs/keyring"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/base"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/errcode"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/models"
@@ -51,41 +52,41 @@ func (c *Connection) CreateEsConnection(req *models.NewConnectionReq) *models.Ba
 		return c.BuildFailed(errcode.ConnectionErr, err.Error())
 	}
 	id := xid.New().String()
-	aesKey, err := c.Keyring.Get(resource.EncryptAESKey)
-	if err != nil {
-		c.Log.Errorf("get aes key failed: %v", err)
-		return c.BuildFailed(errcode.KeyringErr, err.Error())
-	}
-	encryptedPwd, err := util.AesEncrypt(aesKey.Data, req.Password)
-	if err != nil {
-		c.Log.Errorf("aes encrypt failed: %v", err)
-		return c.BuildFailed(errcode.CommonErr, err.Error())
-	}
 	urls, err := util.NormalizeUrls(req.Urls)
 	if err != nil {
 		c.Log.Errorf("normalize urls failed: %v", err)
 		return c.BuildFailed(errcode.CommonErr, err.Error())
 	}
-	_, err = c.dbClient.Exec(
-		fmt.Sprintf("INSERT INTO connection(id,name,urls,user,password) values('%s','%s','%s','%s','%s')",
-			id, req.Name, strings.Join(urls, ","), req.Username, encryptedPwd))
+	_, err = c.Ctx.GetDbClient().Exec(
+		fmt.Sprintf("INSERT INTO connection(id,name,urls,user) values('%s','%s','%s','%s')",
+			id, req.Name, strings.Join(urls, ","), req.Username))
 	if err != nil {
 		c.Log.Errorf("save the connection info to db failed: %v", err)
 		return c.BuildFailed(errcode.DatabaseErr, err.Error())
 	}
+	err = c.Keyring.Set(keyring.Item{
+		Key:   id,
+		Data:  []byte(req.Password),
+		Label: req.Name,
+	})
+	if err != nil {
+		c.Log.Errorf("save password into keyring failed: %v", err)
+		return c.BuildFailed(errcode.DatabaseErr, err.Error())
+	}
+
 	c.Ctx.SetEsClient(id, client)
 
 	return c.BuildSucess(nil)
 }
 
 func (c *Connection) GetSavedConnectionList() *models.BaseResponse {
-	rows, err := c.dbClient.Query("SELECT id, name from connection")
+	rows, err := c.Ctx.GetDbClient().Query("SELECT id, name from connection")
 	if err != nil {
 		c.Log.Errorf("query connection failed: %v", err)
 		return c.BuildFailed(errcode.DatabaseErr, err.Error())
 	}
 	defer rows.Close()
-	connectionList := make([]*models.ConnectionList, 0)
+	connectionList := make([]*models.ConnectionItem, 0)
 	for rows.Next() {
 		var id string
 		var name string
@@ -94,7 +95,7 @@ func (c *Connection) GetSavedConnectionList() *models.BaseResponse {
 			c.Log.Errorf("query connection failed: %v", err)
 			continue
 		}
-		connectionList = append(connectionList, &models.ConnectionList{
+		connectionList = append(connectionList, &models.ConnectionItem{
 			ID:   id,
 			Name: name,
 		})
@@ -112,7 +113,7 @@ func (c *Connection) initDbClient() error {
 	if err != nil {
 		return err
 	}
-	c.dbClient = db
+	c.Ctx.SetDbClient(db)
 
 	return nil
 }

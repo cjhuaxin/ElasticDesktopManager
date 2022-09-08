@@ -14,7 +14,6 @@ import (
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/models"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/resource"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/service"
-	"github.com/thanhpk/randstr"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -94,6 +93,7 @@ func allBinds(app *App, extraBinds []Bind) []interface{} {
 func extraBinds(baseService *base.BaseService) []Bind {
 	return []Bind{
 		service.NewConnection(baseService),
+		service.NewIndex(baseService),
 	}
 }
 
@@ -164,21 +164,6 @@ func (a *App) initKeyring() error {
 		return err
 	}
 	a.Keyring = ring
-	_, err = ring.Get(resource.EncryptAESKey)
-	if err != nil {
-		if err == keyring.ErrKeyNotFound {
-			// init aes key if not exists
-			a.Log.Infof("AES Ecrypt key not exist,generate new one")
-			token := randstr.String(32)
-			ring.Set(keyring.Item{
-				Key:  resource.EncryptAESKey,
-				Data: []byte(token),
-			})
-			return nil
-		}
-		return err
-	}
-	a.Log.Infof("AES Ecrypt key already exist")
 
 	return nil
 }

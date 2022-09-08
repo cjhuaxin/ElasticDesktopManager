@@ -63,3 +63,11 @@ func (c *EdmContext) SetEsClient(id string, client *elastic.Client) {
 
 	c.esClientMap[id] = client
 }
+
+func (c *EdmContext) GetDbClient() *sql.DB {
+	return c.dbClient
+}
+
+func (c *EdmContext) SetDbClient(client *sql.DB) {
+	c.dbClient = client
+}

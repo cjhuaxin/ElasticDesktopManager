@@ -9,3 +9,7 @@ export function BuildFailed(arg1, arg2) {
 export function BuildSucess(arg1) {
   return window['go']['backend']['App']['BuildSucess'](arg1);
 }
+
+export function InitEsClient(arg1, arg2, arg3) {
+  return window['go']['backend']['App']['InitEsClient'](arg1, arg2, arg3);
+}

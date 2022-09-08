@@ -22,6 +22,10 @@ export function Init(arg1) {
   return window['go']['service']['Connection']['Init'](arg1);
 }
 
+export function InitEsClient(arg1, arg2, arg3) {
+  return window['go']['service']['Connection']['InitEsClient'](arg1, arg2, arg3);
+}
+
 export function TestEsConnection(arg1) {
   return window['go']['service']['Connection']['TestEsConnection'](arg1);
 }
