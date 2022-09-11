@@ -1,6 +1,8 @@
 <template>
   <!-- Form -->
   <el-button @click="dialogFormVisible = true" type="info">New Connection</el-button>
+  <el-icon><Refresh /></el-icon>
+
 
   <el-dialog v-model="dialogFormVisible" title="New Connection" draggable :close-on-click-modal="false">
     <el-form ref="ruleFormRef" label-width="100px" style="max-width: 450px" v-loading="loading" :label-position="'top'"
@@ -26,7 +28,7 @@
       </el-row>
       <el-row :gutter="20">
         <el-col :span="24">
-          <div :style="testResultColor" class="test-result">{{ testConnectionData.result }}</div>
+          <div :class="testErr ? 'test-failed' : 'test-success'">{{ testConnectionData.result }}</div>
         </el-col>
       </el-row>
     </el-form>
@@ -40,20 +42,18 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
 import { FormInstance, FormRules, ElNotification } from "element-plus";
-
+import { Refresh } from '@element-plus/icons'
 import { TestEsConnection, CreateEsConnection } from "../../wailsjs/go/service/Connection";
 import { models } from "../../wailsjs/go/models";
 import bus from './mitt'
+import { ref, reactive } from "vue";
 
-const SUCCESS_CODE = "0"
+const testErr = ref(false)
 const dialogFormVisible = ref(false)
 const loading = ref(false)
 const ruleFormRef = ref<FormInstance>()
-const testResultColor = {
-  color: "rgb(32, 97, 49)",
-}
+
 const formNewConnection = reactive({
   connectionName: '',
   urls: '',
@@ -82,11 +82,11 @@ function testConn() {
 
   TestEsConnection(req).then(result => {
     loading.value = false
-    if (result.err_code == SUCCESS_CODE) {
+    if (result.err_msg == "") {
+      testErr.value = false
       testConnectionData.result = "Succeeded"
     } else {
-      testResultColor.color = 'red'
-      console.log(testResultColor)
+      testErr.value = true
       testConnectionData.result = "Failed: " + result.err_msg
     }
   })
@@ -109,16 +109,20 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       CreateEsConnection(req).then(result => {
         loading.value = false
         dialogFormVisible.value = false
-        bus.emit('handleAddNewConnetion')
+        bus.emit('handleAddNewConnection')
 
-        if (result.err_code == SUCCESS_CODE) {
+        if (result.err_msg == "") {
           ElNotification.success({
             title: 'Success',
             message: 'Create Connection Success',
             showClose: false,
           })
         } else {
-          testConnectionData.result = "Failed: " + result.err_msg
+          ElNotification.error({
+            title: 'Failed',
+            message: result.err_msg,
+            showClose: false,
+          })
         }
       })
     } else {
@@ -132,7 +136,13 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   margin-right: 10px;
 }
 
-.test-result {
+.test-success {
+  color: rgb(32, 97, 49);
+  text-align: start;
+}
+
+.test-failed {
+  color: rgb(190, 85, 81);
   text-align: start;
 }
 </style>

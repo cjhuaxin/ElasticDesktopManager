@@ -1,21 +1,5 @@
 export namespace models {
 	
-	export class BaseResponse {
-	    err_code: string;
-	    err_msg: string;
-	    data: any;
-	
-	    static createFrom(source: any = {}) {
-	        return new BaseResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.err_code = source["err_code"];
-	        this.err_msg = source["err_msg"];
-	        this.data = source["data"];
-	    }
-	}
 	export class NewConnectionReq {
 	    name: string;
 	    urls: string;
@@ -45,6 +29,22 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
+	    }
+	}
+	export class BaseResponse {
+	    err_code: string;
+	    err_msg: string;
+	    data: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new BaseResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.err_code = source["err_code"];
+	        this.err_msg = source["err_msg"];
+	        this.data = source["data"];
 	    }
 	}
 

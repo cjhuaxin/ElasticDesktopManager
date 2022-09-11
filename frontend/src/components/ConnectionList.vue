@@ -1,15 +1,15 @@
 <template>
-  <el-tree :props="defaultProps" :load="loadNode" lazy />
+  <el-tree :props="defaultProps" :load="loadNode" @node-click="handleIndexClick" lazy/>
 </template>
 
 <script lang="ts" setup>
 import Node from 'element-plus/es/components/tree/src/model/node'
-import { GetSavedConnectionList } from "../../wailsjs/go/service/Connection";
-import { CatIndex } from "../../wailsjs/go/service/Index";
-import { models } from "../../wailsjs/go/models";
+import {GetSavedConnectionList} from "../../wailsjs/go/service/Connection";
+import {CatIndex} from "../../wailsjs/go/service/Index";
+import {models} from "../../wailsjs/go/models";
 
 import bus from './mitt'
-import { capitalize } from 'lodash';
+import {ElNotification} from 'element-plus';
 
 interface Tree {
   id: string
@@ -17,10 +17,12 @@ interface Tree {
   leaf?: boolean
   icon: string
 }
+
 interface ConnectionInfo {
   id: string;
   name: string;
 }
+
 interface IndexInfo {
   uuid: string;
   index: string;
@@ -31,7 +33,7 @@ interface IndexInfo {
 
 const defaultProps = {
   label: 'name',
-  children: 'index',
+  children: 'children',
   isLeaf: 'leaf',
 }
 
@@ -48,8 +50,10 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
     case 1:
       return listIndex(node.data.id, resolve)
   }
+}
 
-
+const handleIndexClick = (data: Tree) => {
+  console.log(data)
 }
 
 function listIndex(connectionId: string, resolve: (data: Tree[]) => void) {
@@ -58,6 +62,15 @@ function listIndex(connectionId: string, resolve: (data: Tree[]) => void) {
   })
   let treeList: Array<Tree> = new Array<Tree>()
   CatIndex(req).then(result => {
+    if (result.err_msg != "") {
+      ElNotification.error({
+        title: 'Failed',
+        message: result.err_msg,
+        showClose: false,
+      })
+      return resolve(treeList)
+    }
+
     let resData = result.data as Array<IndexInfo>
     for (let data of resData) {
       let treeNode: Tree = {
@@ -80,7 +93,9 @@ function getSavedConnectionList(resolve: (data: Tree[]) => void) {
     for (let data of resData) {
       let treeNode: Tree = {
         id: data.id,
-        name: data.name
+        name: data.name,
+        leaf: false,
+        icon: ""
       }
       treeList.push(treeNode)
     }
@@ -92,11 +107,11 @@ function getSavedConnectionList(resolve: (data: Tree[]) => void) {
 }
 
 function resetNode() {
-  var theChildren = rootNode.childNodes
+  const theChildren = rootNode.childNodes;
   theChildren.splice(0, theChildren.length)
   loadNode(rootNode, rootResolve)
 }
 
-bus.on('handleAddNewConnetion', resetNode)
+bus.on('handleAddNewConnection', resetNode)
 </script>
     

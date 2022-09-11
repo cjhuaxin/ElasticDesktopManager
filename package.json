@@ -2,9 +2,13 @@
   "devDependencies": {
     "unplugin-auto-import": "^0.11.2",
     "unplugin-element-plus": "^0.4.1",
-    "unplugin-vue-components": "^0.22.4"
+    "unplugin-icons": "^0.14.9",
+    "unplugin-vue-components": "^0.22.4",
+    "vite-plugin-inspect": "^0.7.1"
   },
   "dependencies": {
+    "@element-plus/icons": "^0.0.11",
+    "@element-plus/icons-vue": "^2.0.9",
     "element-plus": "^2.2.13",
     "esbuild-darwin-arm64": "^0.14.54",
     "mitt": "^3.0.0"
