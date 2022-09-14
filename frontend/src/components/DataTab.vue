@@ -1,68 +1,27 @@
 <template>
-    <el-tabs
-      v-model="editableTabsValue"
-      type="card"
-      class="demo-tabs"
-      closable
-      @tab-remove="removeTab"
-    >
-      <el-tab-pane
-        v-for="item in editableTabs"
-        :key="item.name"
-        :label="item.title"
-        :name="item.name"
-      >
-        {{ item.content }}
-      </el-tab-pane>
+    <el-tabs v-model="activeTabName" type="card" class="demo-tabs" closable v-if=showDataTab>
+        <el-tab-pane label="User" name="first">
+            <RecordTab />
+        </el-tab-pane>
     </el-tabs>
-  </template>
-  <script lang="ts" setup>
-  import { ref } from 'vue'
-  let tabIndex = 2
-  const editableTabsValue = ref('2')
-  const editableTabs = ref([
-    {
-      title: 'Tab 1',
-      name: '1',
-      content: 'Tab 1 content',
-    },
-    {
-      title: 'Tab 2',
-      name: '2',
-      content: 'Tab 2 content',
-    },
-  ])
-  const addTab = (targetName: string) => {
-    const newTabName = `${++tabIndex}`
-    editableTabs.value.push({
-      title: 'New Tab',
-      name: newTabName,
-      content: 'New Tab content',
-    })
-    editableTabsValue.value = newTabName
-  }
-  const removeTab = (targetName: string) => {
-    const tabs = editableTabs.value
-    let activeName = editableTabsValue.value
-    if (activeName === targetName) {
-      tabs.forEach((tab, index) => {
-        if (tab.name === targetName) {
-          const nextTab = tabs[index + 1] || tabs[index - 1]
-          if (nextTab) {
-            activeName = nextTab.name
-          }
-        }
-      })
+</template>
+<script lang="ts" setup>
+import Node from 'element-plus/es/components/tree/src/model/node'
+import { ref } from 'vue'
+import emitter from "@/utils/emitter";
+import RecordTab from './RecordTab.vue'
+
+const showDataTab = ref(false)
+const activeTabName = ref('')
+const dataTabs = ref([])
+
+const clickIndex = function (param: any) {
+    console.log(param)
+    if (param.leaf) {
+        console.log(param)
+        showDataTab.value = true
     }
-    editableTabsValue.value = activeName
-    editableTabs.value = tabs.filter((tab) => tab.name !== targetName)
-  }
-  </script>
-  <style>
-  .demo-tabs > .el-tabs__content {
-    padding: 32px;
-    color: #6b778c;
-    font-size: 32px;
-    font-weight: 600;
-  }
-  </style>
+}
+
+emitter.on('index-click', clickIndex)
+</script>

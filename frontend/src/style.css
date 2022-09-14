@@ -1,29 +1,44 @@
 html {
-    text-align: center;
-    color: white;
+  text-align: center;
+  color: white;
 }
 
 body {
-    margin: 0;
-    color: white;
-    font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+  margin: 0;
+  color: white;
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
 }
 
 @font-face {
-    font-family: "Nunito";
-    font-style: normal;
-    font-weight: 400;
-    src: local(""),
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 400;
+  src: local(""),
     url("assets/fonts/nunito-v16-latin-regular.woff2") format("woff2");
 }
 
 #app {
-    height: 100vh;
-    text-align: center;
+  height: 100vh;
+  text-align: start;
 }
 
 .background-color {
-    background-color: rgba(27, 38, 54, 1);
+  background-color: rgba(27, 38, 54, 1);
+}
+
+.health-green {
+  fill: rgb(32, 143, 61);
+  color: rgb(32, 143, 61);
+}
+
+.health-yellow {
+  fill: rgb(250, 195, 30);
+  color: rgb(250, 195, 30);
+}
+
+.health-red {
+  fill: rgb(190, 85, 81);
+  color: rgb(190, 85, 81);
 }
