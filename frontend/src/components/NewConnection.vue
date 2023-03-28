@@ -137,7 +137,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       CreateEsConnection(req).then((result) => {
         loading.value = false;
         dialogFormVisible.value = false;
-        emitter.emit("handleAddNewConnection");
+        emitter.emit("add-new-connection");
 
         if (result.err_msg == "") {
           ElNotification.success({
@@ -160,7 +160,6 @@ const submitForm = async (formEl: FormInstance | undefined) => {
 };
 
 function refreshIndex() {
-  console.log("emit add-new-connection");
   emitter.emit("add-new-connection");
 }
 </script>

@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/olivere/elastic/v7"
+	"github.com/elastic/go-elasticsearch/v8"
+
 	"golang.org/x/net/context"
 )
 
 type EdmContext struct {
 	ctxMap      map[string]interface{}
-	esClientMap map[string]*elastic.Client
+	esClientMap map[string]*elasticsearch.Client
 	dbClient    *sql.DB
 	originCtx   context.Context
 }
@@ -49,16 +50,17 @@ func (c *EdmContext) GetOriginCtx() context.Context {
 	return c.originCtx
 }
 
-func (c *EdmContext) GetEsClient(id string) *elastic.Client {
+func (c *EdmContext) GetEsClient(id string) *elasticsearch.Client {
 	if c.esClientMap == nil || len(c.esClientMap) == 0 {
 		return nil
 	}
+
 	return c.esClientMap[id]
 }
 
-func (c *EdmContext) SetEsClient(id string, client *elastic.Client) {
+func (c *EdmContext) SetEsClient(id string, client *elasticsearch.Client) {
 	if c.esClientMap == nil {
-		c.esClientMap = make(map[string]*elastic.Client)
+		c.esClientMap = make(map[string]*elasticsearch.Client)
 	}
 
 	c.esClientMap[id] = client

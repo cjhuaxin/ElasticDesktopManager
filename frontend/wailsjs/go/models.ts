@@ -16,6 +16,33 @@ export namespace models {
 	        this.data = source["data"];
 	    }
 	}
+	export class CatIndexReq {
+	    id: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CatIndexReq(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	    }
+	}
+	
+	export class GetPropertiesReq {
+	    connection_id: string;
+	    index: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetPropertiesReq(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.connection_id = source["connection_id"];
+	        this.index = source["index"];
+	    }
+	}
 	export class NewConnectionReq {
 	    name: string;
 	    urls: string;
@@ -34,17 +61,24 @@ export namespace models {
 	        this.password = source["password"];
 	    }
 	}
-	
-	export class CatIndexReq {
-	    id: string;
+	export class QueryReq {
+	    page_number: number;
+	    page_size: number;
+	    connection_id: string;
+	    index: string;
+	    condition: {[key: string]: any};
 	
 	    static createFrom(source: any = {}) {
-	        return new CatIndexReq(source);
+	        return new QueryReq(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
+	        this.page_number = source["page_number"];
+	        this.page_size = source["page_size"];
+	        this.connection_id = source["connection_id"];
+	        this.index = source["index"];
+	        this.condition = source["condition"];
 	    }
 	}
 

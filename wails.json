@@ -1,4 +1,5 @@
 {
+  "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "ElasticSearchDesktopManager",
   "outputfilename": "ElasticSearchDesktopManager",
   "frontend:install": "npm install",
@@ -6,7 +7,7 @@
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "author": {
-    "name": "",
-    "email": ""
+    "name": "Liam",
+    "email": "cjhuaxin@gmail.com"
   }
 }

@@ -7,7 +7,7 @@
         </svg>
       </i>
       <span>
-        <span>{{ data.name }}</span>
+        <span>{{ data.label }}</span>
         <slot :data="data" :node="node" />
       </span>
     </template>
@@ -24,6 +24,8 @@ import emitter from "@/utils/emitter";
 
 interface Tree {
   id: string;
+  connectionId: string;
+  label: string;
   name: string;
   leaf?: boolean;
   healthStyle: string;
@@ -59,7 +61,7 @@ const loadNode = (node: Node, resolve: (data: Tree[]) => void) => {
       rootResolve = resolve;
       return getSavedConnectionList(resolve);
     case 1:
-      return listIndex(node.data.id, resolve);
+      return listIndex(node, resolve);
   }
 };
 
@@ -67,7 +69,8 @@ const handleIndexClick = (data: Node) => {
   emitter.emit("index-click", data);
 };
 
-function listIndex(connectionId: string, resolve: (data: Tree[]) => void) {
+function listIndex(node: Node, resolve: (data: Tree[]) => void) {
+  let connectionId = node.data.id;
   let req = new models.CatIndexReq({
     id: connectionId,
   });
@@ -86,7 +89,9 @@ function listIndex(connectionId: string, resolve: (data: Tree[]) => void) {
     for (let data of resData) {
       let treeNode: Tree = {
         id: data.uuid,
-        name: `${data.index} [${data.health}/${data.docs_count}/${data.store_size}]`,
+        connectionId: connectionId,
+        label: `${data.index} [${data.docs_count}/${data.store_size}]`,
+        name: data.index,
         leaf: true,
         healthStyle: `health-${data.health}`,
       };
@@ -103,9 +108,11 @@ function getSavedConnectionList(resolve: (data: Tree[]) => void) {
     for (let data of resData) {
       let treeNode: Tree = {
         id: data.id,
+        connectionId: data.id,
+        label: data.name,
         name: data.name,
         leaf: false,
-        icon: "",
+        healthStyle: "",
       };
       treeList.push(treeNode);
     }
@@ -115,7 +122,6 @@ function getSavedConnectionList(resolve: (data: Tree[]) => void) {
 }
 
 function resetNode() {
-  console.log("on add-new-connection");
   const theChildren = rootNode.childNodes;
   theChildren.splice(0, theChildren.length);
   loadNode(rootNode, rootResolve);

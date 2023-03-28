@@ -4,11 +4,13 @@ import (
 	"github.com/99designs/keyring"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/models"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/util"
-	"github.com/olivere/elastic/v7"
+	"github.com/elastic/elastic-transport-go/v8/elastictransport"
+	"github.com/elastic/go-elasticsearch/v8"
 	"go.uber.org/zap"
+	"os"
 )
 
-type BaseService struct {
+type Service struct {
 	Ctx     *models.EdmContext
 	Paths   *Paths
 	Log     *zap.SugaredLogger
@@ -23,7 +25,7 @@ type Paths struct {
 	TmpDir  string
 }
 
-func (*BaseService) BuildSucess(data interface{}) *models.BaseResponse {
+func (*Service) BuildSucess(data interface{}) *models.BaseResponse {
 	return &models.BaseResponse{
 		ErrCode: "0",
 		ErrMsg:  "",
@@ -31,7 +33,7 @@ func (*BaseService) BuildSucess(data interface{}) *models.BaseResponse {
 	}
 }
 
-func (*BaseService) BuildFailed(errCode, errMsg string) *models.BaseResponse {
+func (*Service) BuildFailed(errCode, errMsg string) *models.BaseResponse {
 	return &models.BaseResponse{
 		ErrCode: errCode,
 		ErrMsg:  errMsg,
@@ -39,17 +41,20 @@ func (*BaseService) BuildFailed(errCode, errMsg string) *models.BaseResponse {
 	}
 }
 
-func (*BaseService) InitEsClient(urls string, username, password string) (*elastic.Client, error) {
-	options := make([]elastic.ClientOptionFunc, 0)
+func (*Service) InitEsClient(urls string, username, password string) (*elasticsearch.Client, error) {
 	urlSlice, err := util.NormalizeUrls(urls)
 	if err != nil {
 		return nil, err
 	}
-	options = append(options, elastic.SetURL(urlSlice...))
-	if username != "" {
-		options = append(options, elastic.SetBasicAuth(username, password))
-	}
-	options = append(options, elastic.SetSniff(false))
-
-	return elastic.NewClient(options...)
+	return elasticsearch.NewClient(elasticsearch.Config{
+		// 设置ES服务地址，支持多个地址
+		Addresses: urlSlice,
+		Username:  username,
+		Password:  password,
+		//		CACert:    cert,
+		Logger: &elastictransport.CurlLogger{
+			Output: os.Stdout,
+		},
+	},
+	)
 }

@@ -26,14 +26,14 @@ type Bind interface {
 
 // App struct
 type App struct {
-	*base.BaseService
+	*base.Service
 }
 
 func WailsInit(assets embed.FS) *options.App {
-	baseService := &base.BaseService{}
+	baseService := &base.Service{}
 	// Create an instance of the app structure
 	app := &App{
-		BaseService: baseService,
+		Service: baseService,
 	}
 	bindList := make([]interface{}, 0)
 	extraBindList := extraBinds(baseService)
@@ -90,10 +90,11 @@ func allBinds(app *App, extraBinds []Bind) []interface{} {
 	return all
 }
 
-func extraBinds(baseService *base.BaseService) []Bind {
+func extraBinds(baseService *base.Service) []Bind {
 	return []Bind{
 		service.NewConnection(baseService),
 		service.NewIndex(baseService),
+		service.NewRecord(baseService),
 	}
 }
 

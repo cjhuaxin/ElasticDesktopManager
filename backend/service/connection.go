@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/elastic/go-elasticsearch/v8"
+
 	"github.com/99designs/keyring"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/base"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/errcode"
@@ -17,12 +19,12 @@ import (
 )
 
 type Connection struct {
-	*base.BaseService
+	*base.Service
 }
 
-func NewConnection(baseService *base.BaseService) *Connection {
+func NewConnection(baseService *base.Service) *Connection {
 	return &Connection{
-		BaseService: baseService,
+		Service: baseService,
 	}
 }
 
@@ -116,4 +118,38 @@ func (c *Connection) initDbClient() error {
 	c.Ctx.SetDbClient(db)
 
 	return nil
+}
+
+func GetConnectionById(s *base.Service, connectionId string) (*elasticsearch.Client, error) {
+	client := s.Ctx.GetEsClient(connectionId)
+	if client == nil {
+		stmt, err := s.Ctx.GetDbClient().Prepare("SELECT id,name,urls,user from connection WHERE id = ?")
+		if err != nil {
+			s.Log.Errorf("prepare select connection sql failed:%v", err)
+			return nil, err
+		}
+		defer stmt.Close()
+		var id, name, urls, user string
+		err = stmt.QueryRow(connectionId).Scan(&id, &name, &urls, &user)
+		if err != nil {
+			s.Log.Errorf("query connection failed:%v", err)
+			return nil, err
+		}
+		item, err := s.Keyring.Get(connectionId)
+		if err != nil {
+			s.Log.Errorf("get encrypt aes key from keyring failed:%v", err)
+			return nil, err
+		}
+
+		s.Log.Infof("urls[%s]|user[%s]", urls, user)
+		client, err = s.InitEsClient(urls, user, string(item.Data))
+		if err != nil {
+			s.Log.Errorf("init es client failed:%v", err)
+			return nil, err
+		}
+
+		s.Ctx.SetEsClient(connectionId, client)
+	}
+
+	return client, nil
 }

@@ -1,21 +1,22 @@
 package service
 
 import (
-	"context"
-	"strings"
-
+	"fmt"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/base"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/errcode"
 	"github.com/cjhuaxin/ElasticDesktopManager/backend/models"
+	"github.com/cjhuaxin/ElasticDesktopManager/backend/resource"
+	"github.com/cjhuaxin/ElasticDesktopManager/backend/util"
+	"github.com/tidwall/gjson"
 )
 
 type Index struct {
-	*base.BaseService
+	*base.Service
 }
 
-func NewIndex(baseService *base.BaseService) *Index {
+func NewIndex(baseService *base.Service) *Index {
 	return &Index{
-		BaseService: baseService,
+		Service: baseService,
 	}
 }
 
@@ -26,51 +27,35 @@ func (i *Index) Init(ctx *models.EdmContext) error {
 }
 
 func (i *Index) CatIndex(req *models.CatIndexReq) *models.BaseResponse {
-	client := i.Ctx.GetEsClient(req.ID)
-	if client == nil {
-		stmt, err := i.Ctx.GetDbClient().Prepare("SELECT id,name,urls,user from connection WHERE id = ?")
-		if err != nil {
-			i.Log.Errorf("prepare select connection sql failed:%v", err)
-			return i.BuildFailed(errcode.DatabaseErr, err.Error())
-		}
-		defer stmt.Close()
-		var id, name, urls, user string
-		err = stmt.QueryRow(req.ID).Scan(&id, &name, &urls, &user)
-		if err != nil {
-			i.Log.Errorf("query connection failed:%v", err)
-			return i.BuildFailed(errcode.DatabaseErr, err.Error())
-		}
-		item, err := i.Keyring.Get(req.ID)
-		if err != nil {
-			i.Log.Errorf("get encrypt aes key from keyring failed:%v", err)
-			return i.BuildFailed(errcode.DatabaseErr, err.Error())
-		}
-		client, err = i.InitEsClient(urls, user, string(item.Data))
-		if err != nil {
-			i.Log.Errorf("init es client failed:%v", err)
-			return i.BuildFailed(errcode.DatabaseErr, err.Error())
-		}
-
-		i.Ctx.SetEsClient(req.ID, client)
+	client, err := GetConnectionById(i.Service, req.ID)
+	if err != nil {
+		i.Log.Errorf("get connection[%s] failed:%v", req.ID, err)
+		return i.BuildFailed(errcode.DatabaseErr, err.Error())
 	}
-
-	response, err := client.CatIndices().Do(context.TODO())
+	response, err := client.Cat.Indices(client.Cat.Indices.WithFormat(resource.EsDefaultFormat))
 	if err != nil {
 		i.Log.Errorf("cat indeices failed:%v", err)
 		return i.BuildFailed(errcode.DatabaseErr, err.Error())
 	}
+
+	body := util.ReadEsBody(response.Body)
 	shownIndices := make([]*models.IndexItem, 0)
-	for _, index := range response {
-		if strings.HasPrefix(index.Index, ".") {
-			continue
+
+	var index int
+	for {
+		result := gjson.Get(body, fmt.Sprint(index))
+		if result.Type == gjson.Null {
+			break
 		}
+
 		shownIndices = append(shownIndices, &models.IndexItem{
-			Uuid:      index.UUID,
-			Index:     index.Index,
-			Health:    index.Health,
-			DocsCount: index.DocsCount,
-			StoreSize: strings.ToUpper(index.StoreSize),
+			Uuid:      result.Get("uuid").Str,
+			Index:     result.Get("index").Str,
+			Health:    result.Get("health").Str,
+			DocsCount: result.Get("docs\\.count").Int(),
+			StoreSize: result.Get("store\\.size").Str,
 		})
+		index++
 	}
 
 	return i.BuildSucess(shownIndices)
