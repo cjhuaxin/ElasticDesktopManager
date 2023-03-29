@@ -24,9 +24,3 @@ type IndexItem struct {
 type SearchRes struct {
 	Records json.RawMessage `json:"records"`
 }
-
-type PropertieItem struct {
-	Title   string `json:"title"`
-	Key     string `json:"key"`
-	DataKey string `json:"dataKey"`
-}

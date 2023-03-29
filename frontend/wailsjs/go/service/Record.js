@@ -10,10 +10,6 @@ export function BuildSucess(arg1) {
   return window['go']['service']['Record']['BuildSucess'](arg1);
 }
 
-export function GetProperties(arg1) {
-  return window['go']['service']['Record']['GetProperties'](arg1);
-}
-
 export function Init(arg1) {
   return window['go']['service']['Record']['Init'](arg1);
 }

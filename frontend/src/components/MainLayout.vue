@@ -1,12 +1,12 @@
 <script setup>
-import NewConnection from './NewConnection.vue'
-import ConnectionList from './ConnectionList.vue'
-import DataTab from './DataTab.vue'
+import NewConnection from "./NewConnection.vue";
+import ConnectionList from "./ConnectionList.vue";
+import DataTab from "./DataTab.vue";
 </script>
 
 <template>
   <el-row>
-    <el-col :xs="4" :sm="4" :md="8" :lg="8" :xl="8">
+    <el-col :xs="3" :sm="3" :md="7" :lg="7" :xl="7">
       <div class="grid-content ep-bg-purple">
         <NewConnection />
       </div>
@@ -20,7 +20,6 @@ import DataTab from './DataTab.vue'
     </el-col>
   </el-row>
 </template>
-
 
 <style>
 .grid-content {

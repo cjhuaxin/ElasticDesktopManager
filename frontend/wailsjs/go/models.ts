@@ -29,20 +29,6 @@ export namespace models {
 	    }
 	}
 	
-	export class GetPropertiesReq {
-	    connection_id: string;
-	    index: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new GetPropertiesReq(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.connection_id = source["connection_id"];
-	        this.index = source["index"];
-	    }
-	}
 	export class NewConnectionReq {
 	    name: string;
 	    urls: string;

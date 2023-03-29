@@ -16,7 +16,6 @@
         :indexId="item.indexId"
         :indexName="item.name"
         :connectionId="item.connectionId"
-        :columns="item.columns"
       />
     </el-tab-pane>
   </el-tabs>
@@ -25,15 +24,12 @@
 import { ref, shallowRef } from "vue";
 import emitter from "@/utils/emitter";
 import Record from "./RecordTab.vue";
-import { models } from "../../wailsjs/go/models";
-import { GetProperties } from "../../wailsjs/go/service/Record";
 
 interface Tab {
   indexId: string;
   connectionId: string;
   name: string;
   title: string;
-  columns: Array<any>;
   content: any;
 }
 
@@ -43,23 +39,29 @@ const dataTabs = ref(new Array<Tab>());
 
 const clickIndex = function (param: any) {
   if (param.leaf) {
-    showDataTab.value = true;
-    let req = new models.QueryReq({
-      connection_id: param.connectionId,
-      index: param.name,
-    });
-    GetProperties(req).then((result) => {
+    let exists = false;
+    for (let tab of dataTabs.value) {
+      if (tab.name == param.name) {
+        exists = true;
+        break;
+      }
+    }
+   
+    if (exists) {
+       //if tab is already exists,just active the tab
+      activeTabName.value = param.name;
+    } else {
+      showDataTab.value = true;
       let newTab: Tab = {
         indexId: param.id,
         connectionId: param.connectionId,
         name: param.name,
         title: param.name,
-        columns: result.data,
         content: shallowRef(Record),
       };
       dataTabs.value.push(newTab);
       activeTabName.value = param.name;
-    });
+    }
   }
 };
 

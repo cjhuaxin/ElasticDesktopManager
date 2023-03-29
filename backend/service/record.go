@@ -27,31 +27,7 @@ func NewRecord(baseService *base.Service) *Record {
 
 func (r *Record) Init(ctx *models.EdmContext) error {
 	r.Ctx = ctx
-
 	return nil
-}
-
-func (r *Record) GetProperties(req *models.GetPropertiesReq) *models.BaseResponse {
-	client, err := GetConnectionById(r.Service, req.ConnectionID)
-	if err != nil {
-		r.Log.Errorf("get connection[%s] failed:%v", req.ConnectionID, err)
-		return r.BuildFailed(errcode.DatabaseErr, err.Error())
-	}
-	properties, err := r.assembleProperties(req, client)
-	if err != nil {
-		r.Log.Errorf("GetProperties[%s] failed:%v", req.ConnectionID, err)
-		return r.BuildFailed(errcode.DatabaseErr, err.Error())
-	}
-	propItemList := make([]*models.PropertieItem, 0, len(properties))
-	for _, p := range properties {
-		propItemList = append(propItemList, &models.PropertieItem{
-			Title:   p,
-			Key:     p,
-			DataKey: p,
-		})
-	}
-
-	return r.BuildSucess(propItemList)
 }
 
 func (r *Record) Search(req *models.QueryReq) *models.BaseResponse {
@@ -86,14 +62,14 @@ func (r *Record) assembleConditions(req *models.QueryReq) map[string]interface{}
 	return nil
 }
 
-func (r *Record) assembleProperties(req *models.GetPropertiesReq, client *elasticsearch.Client) ([]string, error) {
-	resp, err := client.Indices.GetMapping(client.Indices.GetMapping.WithIndex(req.Index))
+func (r *Record) assembleProperties(client *elasticsearch.Client, index string) ([]string, error) {
+	resp, err := client.Indices.GetMapping(client.Indices.GetMapping.WithIndex(index))
 	if err != nil {
 		return nil, err
 	}
 
 	body := util.ReadEsBody(resp.Body)
-	properties := gjson.Get(body, fmt.Sprintf("%s.mappings.properties", req.Index)).Map()
+	properties := gjson.Get(body, fmt.Sprintf("%s.mappings.properties", index)).Map()
 	columns := make([]string, 0, len(properties))
 	for k := range properties {
 		if !strings.HasPrefix(k, "@") {

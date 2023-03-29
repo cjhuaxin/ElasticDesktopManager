@@ -11,11 +11,6 @@ type CatIndexReq struct {
 	ID string `json:"id"`
 }
 
-type GetPropertiesReq struct {
-	ConnectionID string `json:"connection_id"`
-	Index        string `json:"index"`
-}
-
 type QueryReq struct {
 	*Pagination  `json:"pagination"`
 	ConnectionID string                 `json:"connection_id"`
