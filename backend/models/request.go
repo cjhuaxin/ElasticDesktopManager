@@ -12,7 +12,7 @@ type CatIndexReq struct {
 }
 
 type QueryReq struct {
-	*Pagination  `json:"pagination"`
+	*Pagination
 	ConnectionID string                 `json:"connection_id"`
 	Index        string                 `json:"index"`
 	Condition    map[string]interface{} `json:"condition"`

@@ -39,7 +39,7 @@ func (r *Record) Search(req *models.QueryReq) *models.BaseResponse {
 	}
 	var esResp *esapi.Response
 	if len(req.Condition) == 0 {
-		esResp, err = r.queryAllRecord(client, req.Index)
+		esResp, err = r.queryAllRecord(client, req)
 		if err != nil {
 			r.Log.Errorf("queryAllRecord[%s] failed:%v", req.Index, err)
 			return r.BuildFailed(errcode.DatabaseErr, err.Error())
@@ -80,14 +80,15 @@ func (r *Record) assembleProperties(client *elasticsearch.Client, index string) 
 	return columns, nil
 }
 
-func (r *Record) queryAllRecord(client *elasticsearch.Client, index string) (*esapi.Response, error) {
+func (r *Record) queryAllRecord(client *elasticsearch.Client, req *models.QueryReq) (*esapi.Response, error) {
 	body := map[string]interface{}{
 		"query": map[string]interface{}{
 			"match_all": map[string]interface{}{},
 		},
 	}
 	return client.Search(
-		client.Search.WithIndex(index),
+		client.Search.WithIndex(req.Index),
 		client.Search.WithBody(esutil.NewJSONReader(&body)),
+		client.Search.WithSize(req.PageSize),
 	)
 }

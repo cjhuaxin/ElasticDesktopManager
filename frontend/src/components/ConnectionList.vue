@@ -1,5 +1,12 @@
 <template>
-  <el-tree :props="defaultProps" :load="loadNode" @node-click="handleIndexClick" lazy>
+  <el-tree
+    :props="defaultProps"
+    :load="loadNode"
+    @node-click="handleIndexClick"
+    indent="10"
+    highlight-current
+    lazy
+  >
     <template #default="{ node, data }">
       <i style="health-icon" v-if="node.isLeaf">
         <svg height="14" width="14">
@@ -90,7 +97,8 @@ function listIndex(node: Node, resolve: (data: Tree[]) => void) {
       let treeNode: Tree = {
         id: data.uuid,
         connectionId: connectionId,
-        label: `${data.index} [${data.docs_count}/${data.store_size}]`,
+        label: `${data.index} [${data.docs_count}]`,
+        // label: `${data.index} [${data.docs_count}/${data.store_size}]`,
         name: data.index,
         leaf: true,
         healthStyle: `health-${data.health}`,
@@ -132,5 +140,10 @@ emitter.on("add-new-connection", resetNode);
 <style>
 .health-icon {
   margin-right: 1%;
+}
+
+.el-tree-node__expand-icon.is-leaf
+{
+    display: none;
 }
 </style>

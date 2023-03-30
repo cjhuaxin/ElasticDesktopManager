@@ -14,7 +14,7 @@ import DataTab from "./DataTab.vue";
         <ConnectionList />
       </div>
     </el-col>
-    <el-col :xs="20" :sm="20" :md="16" :lg="16" :xl="16">
+    <el-col :xs="21" :sm="21" :md="17" :lg="17" :xl="17">
       <div class="grid-content ep-bg-purple" />
       <DataTab />
     </el-col>
